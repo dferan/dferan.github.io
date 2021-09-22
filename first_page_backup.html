@@ -84,45 +84,47 @@
         <article class="blog-post">
 
           <!-- First Section -->
-          <h3 class="blog-post-title">Introduction and Motivation</h3>
+          <h3 class="blog-post-title">Introduction and Motivation</h2>
           <hr>
-          <p>Originally the intent was to create a system for recommending movie critics based on user alignment, so that users could be connected with reviewers who share their tastes.</p>
+          <p>Originally the intent was to create a recommender system for movie critics/reviewers; a system for recommending movie reviewers (individuals, organizations, etc.) based on alignment, so that users could be connected with reviewers who share their tastes.</p>
 
-          <p> Rotten Tomatoes’ extensive collection of reviewers, reviews and movies was a good source of data. At some point, I shifted to a more traditional recommender system for movies; it was easier to evaluate the recommendations for movies than for critics, movies being a more familiar domain. It was also more useful. </p>
+          <p>I needed a suitable database and figured it would be fun to fold in a data scraping project, so I took aim at Rotten Tomatoes’ extensive collection of reviewers, reviews and movies. </p>
+
+          <p>At some point, I shifted to a more traditional recommender system for movies; I think this was just easier to evaluate (in that I had enough domain knowledge to evaluate if a set of recommendations make sense or are sheer nonsense). </p>
 
 
           <!-- Second Section -->
-          <h3 class="blog-post-title">Recommender Basics </h3>
+          <h3 class="blog-post-title">Recommender Basics </h2>
           <hr>
-          <p>Briefly, an item-item recommender system recommends items to users based on data related to the items. These recommendations can be based on similarities between the items themselves ("<a href='https://en.wikipedia.org/wiki/Recommender_system#Content-based_filtering' target='_blank'>content-based</a>") or based on the interactions of users with the set of items ("<a href='https://en.wikipedia.org/wiki/Collaborative_filtering' target='_blank'>collaborative-filtering</a>"). We’ll explore both approaches. (For more information on theory and implementation of recommender systems, "<a href='https://learning.oreilly.com/library/view/hands-on-recommendation-systems/9781788993753/' target='_blank'>Hands-On Recommender Systems</a>” by Rounak Banik is a useful guide.)</p>
+          <p>In criminally brief detail, an item-based recommender system recommends items to users. These recommendations can be based on similarities between the items themselves ("<a href='https://en.wikipedia.org/wiki/Recommender_system#Content-based_filtering' target='_blank'>content-based</a>") or based on the interactions of similar users with the set of items ("<a href='https://en.wikipedia.org/wiki/Collaborative_filtering' target='_blank'>collaborative-filtering</a>"). We’ll try both approaches and compare results briefly. (For more information on theory and implementation, "<a href='https://learning.oreilly.com/library/view/hands-on-recommendation-systems/9781788993753/' target='_blank'>Hands-On Recommender Systems</a>” by Rounak Banik is a useful guide.)</p>
 
-          <p>In short, both approaches seem necessary here. Collaborative filtering has many advantages, but by itself it fails to capture relevant factual similarities necessary for strong recommendations (like plot).  </p>
+          <p>But in short, both prove necessary, in my opinion. Collaborative filtering has many advantages (especially with a dataset like this one), but by itself it fails to capture relevant factual similarities (like plot).  </p>
 
 
           <!-- Third Section -->
-          <h3 class="blog-post-title">Acquiring the Data </h3>
+          <h3 class="blog-post-title">Acquiring the Data </h2>
           <hr>
           
 
           <div class='row'>
             <div class='col-lg-8'>
-              <p>The first objective was to collect all the reviews from all reviewers on Rotten Tomatoes (using a combination of <a href="http://scrapy.org">Scrapy</a> and <a href="https://www.selenium.dev/">Selenium</a>). Movie data (e.g., genre, synopsis) and publisher information (i.e., the organizations critics belong to) was also collected. </p>
-              <p>The data were then stored in an on-disk (for simplicity) SQLite database to provide smoother analysis and access. In total 828,627 reviews were scraped. However, reviews about movies with a low total review count (under 8) or by reviewers with few total reviews (under 80) were excluded; these movies and reviewers lacked strong connections to other items in the dataset. After filtering, we end up with about 700,000 reviews on around 20,000 movies. </p>
+              <p>In keeping with the original intent, the first objective was to collect all the reviews from all reviewers on Rotten Tomatoes (using Scrapy and Selenium). Movie data (e.g., genre, synopsis) was also collected. It was also necessary to collect information on publications, as Rotten Tomatoes lists some reviewers individually and some only when they publish for certain publications. </p>
+              <p>The data were then stored in an on-disk (for simplicity) SQLite database to provide smoother analysis and access. In total 828,627 reviews were scraped. However, reviews either about movies with a low total review count (under 8) or by reviewers with few total reviews (under 80) were excluded; these movies and reviewers lacked strong connections to other items in the dataset. After filtering, we end up with about 700,000 reviews on 20000 movies. </p>
             </div>
             <div class = 'col-lg-4'>
               <img src = 'rt_erd.jpg'> 
-              <p class='fig-caption'> Simple ERD of SQLite DB for RT data</p>
+              <p class='fig-caption'> ERD of SQLite DB for RT data</p>
             </div>
           </div>
 
           <!-- Fourth Section -->
-          <h3 class="blog-post-title">Collaborative Filtering </h3>
+          <h3 class="blog-post-title">Collaborative Filtering </h2>
           <hr>
-          <p>We can build the first iteration with just the reviews themselves as features. We need to:</p>
+          <p>We can build the first iteration with just the reviews themselves as features. For this we will need to:</p>
           <ol>
-            <li> Retrieve the reviews from the DB; we need the rating ("fresh", "rotten" or "unrated"), the movie title, and the reviewer's unique id </li>
-            <li> Convert the categorical ratings (“rotten” for negative reviews and “fresh” for positive reviews) into numerical data: negative reviews were coded as -1, positive as 1, and null values (i.e., no review was found) were coded as 0. </li>
-            <li> Create a matrix of Movies x Reviewers, where the values are the rating assigned (-1, 0, or 1) </li>
+            <li> Retrieve the reviews from the DB; specifically, we need the rating, the movie, and the reviewer </li>
+            <li> Convert the categorical ratings (“rotten” for negative reviews and “fresh” for positive reviews) into numerical data: negative reviews will be coded as -1, positive as 1, and where no review was conducted for a given movie by a given reviewer, 0 will be assigned. </li>
+            <li> Create a matrix of Movies x Reviewers, where the values are the rating assigned (encoded as either -1, 0, or 1) </li>
             <li> Use this matrix to calculate an item-item similarity matrix; cosine similarity is <a href='https://www.sciencedirect.com/topics/computer-science/cosine-similarity' target="_blank">generally a good choice for sparse matrices</a> </li>
             <li> Write a quick function to look up a movie title in this cosine similarity matrix and return the titles of the nearest N movies.</li>
           </ol>
@@ -149,17 +151,17 @@
                   import sqlite3 
                   import pandas as pd 
                   
-                  # open a connection to the DB 
+                  # open a connection
                   conn = sqlite3.connect('rt.db') 
                   cur = conn.cursor()
 
                   # target the relevant data
                   query = """ SELECT Reviews.Movie_id,
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Movies.Movie_title, 
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reviews.Author_id,
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Freshness
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM Reviews JOIN Movies ON
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Movies.movie_id = Reviews.movie_id"""
+                                     Movies.Movie_title, 
+                                     Reviews.Author_id,
+                                     Freshness
+                              FROM Reviews JOIN Movies ON
+                                     Movies.movie_id = Reviews.movie_id
 
                   # execute the query
                   results = cur.execute(query)
@@ -167,7 +169,7 @@
                   # and get the data
                   data = []
                   for row in results:
-                  &nbsp;&nbsp;data.append(row)
+                    data.append(row)
                   conn.close()
 
 
@@ -203,13 +205,13 @@
                   ########## 5 -- Look up titles to get top n recommendations ##########
 
                   def get_recs(movie_title, how_many = 10):
-                  &nbsp;&nbsp;# simple try/except block to test if movie_title is in the dataset
-                  &nbsp;&nbsp;try: 
-                  &nbsp;&nbsp;&nbsp;&nbsp;a = df_cosine[movie_title].sort_values(ascending=False)
-                  &nbsp;&nbsp;&nbsp;&nbsp;recs = a[1:how_many + 1]
-                  &nbsp;&nbsp;&nbsp;&nbsp;return recs
-                  &nbsp;&nbsp;except:
-                  &nbsp;&nbsp;&nbsp;&nbsp;print('Movie Not Found!') 
+                    # simple try/except block to test if movie_title is in the dataset
+                    try: 
+                      a = df_cosine[movie_title].sort_values(ascending=False)
+                      recs = a[1:how_many + 1]
+                      return recs
+                    except:
+                      print('Movie Not Found!') 
                   </code>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -221,10 +223,8 @@
 
           <div class='row py-3'>
             <div class='col-lg-8'>
-              <p>Inspecting the results, the top recommendations for the horror-thriller “Us” include “Toy Story 4”. Problematic. Reviewers tend to review all big movie releases, so an element of user-choice is lost; big movies will be seen by the same people, who will go see other big movies of many different kinds. Popular movies will be lumped together regardless of content. </p>
-              <p>An advantage of this is that movies of the same era will naturally end up together, since they were reviewed by the same people. We don't really need to try introducing any chronological features.</p> 
-
-              <p>However, the disadvantages are critical. We need to add in additional features to get more meaningful recommendations. </p>
+              <p>Inspecting the results, we see the top recommendations for the horror-thriller “Us” include “Toy Story 4”. Problematic. Reviewers tend to review all big movie releases, so an element of user-choice is lost (i.e., they don’t get to choose what they review), meaning that big movies will be see by the same people, and so popular movies will be lumped together regardless of content. </p>
+              <p>An advantage of this is that the system can naturally capture filmic peer groups across different generations of reviewers (i.e., movies of the same era will naturally end up together). However, the disadvantage is also significant: the system has no way of grouping similar movies beyond their critical reception. We need to add in some additional features. </p>
             </div>
 
             <div class='col-lg-4'>
@@ -234,13 +234,13 @@
           </div>
 
           <!-- Fifth Section --> 
-          <h3 class="blog-post-title">Content-based Features </h3>
+          <h3 class="blog-post-title">Content-based Features </h2>
           <hr>
-          <p>What information do we have about the actual content of the movies? We have the genre(s) and a synopsis. These turn out to be powerful additions to the system.</p>
+          <p>What information do we have about the actual content of the movies? Well, we have the genre(s) (Rotten Tomatoes supports listing multiple genres) and the synopsis in the database. These turn out to be powerful additions to the system.</p>
 
-          <p>We need to vectorize these fields. For the genres, we can get a list of all possible genres and then one-hot encode the genre column; for each genre, each movie will be assigned a 1 if it has been labelled as that genre. </p>
+          <p>We need to vectorize these fields. For the genres, we can get a list of all possible genres and then one-hot encode the genre column; for each genre, each movie will be assigned a 1 if that genre is present in the genres column or 0 if not. </p>
 
-          <p>For the synopsis, we can use tokenize the values and use a bag-of-words approach. We also stem the tokens and remove stop words (with a few custom additions to the list). We also have to decide on an ngram range and whether or not we want to limit the vocabulary. For now, we’ll use uni-, bi- and trigrams, and we won’t impose any limits on the vocabulary (as it ultimately doesn't affect performance much, in this particular case).</p>
+          <p>For the synopsis, we can use a bag-of-words approach and tokenize the synopsis. We’ll stem and remove stop words (with a few custom additions to the list). We also have to decide on an ngram range and whether or not we want to limit the vocabulary. For now, we’ll use uni-, bi- and trigrams, and we won’t impose any limits on the vocabulary.</p>
 
           <div class="btn-group py-3">
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#genreModal"> Genre Code Example 
@@ -270,8 +270,8 @@
 
                   # use SQLite json_extract to get genre info stored in json
                   query = """ SELECT Movie_title,
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;json_extract(movie_info, "$.Genre")
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM Movies """
+                                     json_extract(movie_info, "$.Genre")
+                              FROM Movies """
 
                   # execute the query
                   results = cur.execute(query)
@@ -279,7 +279,7 @@
                   # and get the data
                   data = []
                   for row in results:
-                  &nbsp;&nbsp;data.append(row)
+                    data.append(row)
                   conn.close()
 
                   ########## 2 -- Get a list of all possible genres ##########
@@ -292,9 +292,9 @@
                   genres_all = []
 
                   for value in df_genres.Genre:
-                  &nbsp;&nbsp;genres = value.split(',') # the values are strings with possibly multiple genres listed
-                  &nbsp;&nbsp;for j in genres:
-                  &nbsp;&nbsp;&nbsp;&nbsp;genres_all.append(j.strip())
+                    genres = value.split(',') # the values are strings with possibly multiple genres listed
+                    for j in genres:
+                      genres_all.append(j.strip())
 
                   genres_all = list(set(genres_all))
                   genres_all.remove('NA')
@@ -304,7 +304,7 @@
 
                   # create a new column for each genre in list genres_all, and fill with 1/0 values
                   for genre in genres_all:
-                  &nbsp;&nbsp;df_genres[genre] = df_genres.Genre.str.contains(genre).astype(int)
+                    df_genres[genre] = df_genres.Genre.str.contains(genre).astype(int)
 
                   # now clean up a bit
                   df_genres = df_genres.set_index('Movie_title')
@@ -348,16 +348,16 @@
 
                   # custom tokenizer so we can do some stemming and filtering
                   def tokenize(text):
-                  &nbsp;&nbsp;tokens = [word for word in nltk.word_tokenize(text) if len(word) > 2]
-                  &nbsp;&nbsp;stemmer = PorterStemmer()
-                  &nbsp;&nbsp;stems = [stemmer.stem(item) for item in tokens]
-                  &nbsp;&nbsp;return stems
+                    tokens = [word for word in nltk.word_tokenize(text) if len(word) > 2]
+                    stemmer = PorterStemmer()
+                    stems = [stemmer.stem(item) for item in tokens]
+                    return stems
 
                   # set up the stopwords
                   stopwords = stopwords.words('english')
                   additions = ['film', 'movie', 'remain', 'america', 'filmmaker', 'actor'
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'actress', 'finally', 'meanwhile', 'everything', 'because'
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'start', 'back', 'figure'] # additions derived by experience and trail/error
+                               'actress', 'finally', 'meanwhile', 'everything', 'because'
+                               'start', 'back', 'figure'] # additions derived by experience and trail/error
 
                   stopwords.extend(additions)
 
@@ -366,8 +366,8 @@
 
                   # can experiment with either CountVectorizer or TfidfVectorizer; both seem to make sense
                   syn_vectorizer = TfidfVectorizer(tokenizer=tokenize,
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stop_words=stopswords,
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ngram_range=(1,3)
+                                                   stop_words=stopswords,
+                                                   ngram_range=(1,3)
                                                    )
 
                   syn_matrix = syn_vectorizer.fit_transform(texts.Synopsis)
@@ -381,25 +381,15 @@
             </div>
           </div>
 
-          <h3 class="blog-post-title">In Search of Efficiency </h3>
+          <h3 class="blog-post-title">In Search of Efficiency </h2>
           <hr>
-          <p>We can concatenate these new features to the reviewer-based features from our collaborative filtering. Now we can calculate the cosine similarity matrix using the same procedure as earlier. However, we have about 20000 items (movies) in our matrix. Since each item is compared against itself, we end up with a 20000 x 20000 dense matrix, which is difficult to work with. </p>
+          <p>We can concatenate these new features to the reviewer-based features from our collaborative filtering efforts. Now that we have our feature matrix, we can calculate the cosine similarity matrix using essentially the same procedure as earlier. However, we have about 20000 items in our matrix. Since each item is compared against itself, we end up with a 20000 x 20000 dense matrix, which is difficult to work with; the storage costs alone are significant. </p>
 
-          <p>Instead of the dense cosine similarity matrix, we can work with a sparse feature matrix. First, we use sklearn to apply SVD and k-means clustering to the reviews and create clusters rather than retaining all the reviewer information (since the most interesting result from the reviewer-based feature was the era- and popularity groupings). Next, we add in the genre and synopsis features.  </p>
+          <p>Instead of the dense cosine similarity matrix, we can work with the sparse feature matrix. First, we can use sklearn to apply SVD and k-means clustering to the reviews and create clusters rather than retaining all the reviewer information. Next, we add in the genre and synopsis features.  </p>
 
-          <p>Now we can query the feature matrix using basic nearest neighbors to get recommendations on the fly; this proves to be a more efficient way of getting recommendations, and without having to store a ~3GB cosine-similarity matrix. </p>
+          <p>Now we can query the feature matrix using nearest neighbors to get recommendations on the fly; this proves to be a more efficient way of getting recommendations. </p>
 
           <a href="https://share.streamlit.io/dferan/rt_recommender/main/rt_rec_app.py" class="btn btn-primary" role="button" target='_blank'>Try out an online demo!</a>
-
-          <p> Some caveats and potential improvements:
-            <ul>
-              <li>The data was scraped in December 2020, so movies after that are not available; it was not designed to be extensible, though it could probably be in the future. </li>
-              <li> We might look into ways to mitigate <a href="http://fsnagle.org/papers/celma2010longtail.pdf"> long-tail recommendations </a> if the standard recommendations are too expected</li>
-              <li> There are still some surprising results; more thorough data auditing during the scraping process might have been of benefit</li> 
-            </ul>
-          </p>
-
-          <p> Overall, however, the results are (in my estimation) comparable to those offered by Rotten Tomatoes themsevles for a given movie!</p>
         </article>
 
     </div>
