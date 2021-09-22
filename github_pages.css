@@ -1,0 +1,27 @@
+/* */
+
+
+p.card-text {
+	color:  gray;
+}
+
+a.card-link {
+	text-decoration: none;
+}
+
+button.btn-link, button.btn-link:hover {
+	text-decoration: none;
+	color:white;	
+	font-weight: 900;
+	font-size: 1.3em;
+}
+
+.fig-caption {
+	font-size: 0.8em;
+	font-style: italic;
+}
+
+code {
+	white-space: pre-line;
+	color: green;
+}
