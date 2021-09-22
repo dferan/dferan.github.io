@@ -25,3 +25,7 @@ code {
 	white-space: pre-line;
 	color: green;
 }
+
+#first_demo_link {
+	padding-bottom: 10px
+}
