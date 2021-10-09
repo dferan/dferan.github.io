@@ -71,30 +71,458 @@
 
 
           <!-- Second Section -->
-          <h3 class="blog-post-title">Limitations as a Retail Trader </h3>
+          <h3 class="blog-post-title">The Data </h3>
           <hr>
 
-          
+          <div class='row'>
+            <div class='col-lg-8'>
+              <p>
+                We’ll be using data taken from MetaCritic, covering games from 2015-2020 with at least seven reviews. At the moment, we are interested in metadata about the games and their synopses; we won’t bother scraping reviews.
+              </p>
+
+              <p>
+                Before we can put the data to use, however, there a few issues to resolve:
+              </p>
+              <ul>
+                <li> Null values, especially for the "publisher" and "num_players" fields </li>
+                <li> MetaCritic allows for a large number of categorical values for the number of players listed; this can be consolidated a bit </li>
+                <li> The user ratings should be converted to a numerical data type</li>
+                <li> Similarly, the release date column should be converted to a datetime type for easier hanling</li>
+              </ul>
+              <p> 
+                Once we finish up with that, we can move onto some simple EDA and visualizations 
+              </p>
+            </div>
+
+            <div class='col-lg-4'>
+              <img src='images/text_gen_games/metacritic_data.png'>
+              <p class='fig-caption'> The raw scraped data, in need of some work </p>
+            </div>
+              
+          </div>
 
           <!-- Third Section -->
-          <h3 class="blog-post-title">Setting Up Tasks and Targets </h3>
+          <h3 class="blog-post-title">EDA and Visualizations </h3>
           <hr>
-          
+
+          <p>
+            There are many different questions we could address with this data. For example, MetaCritric tracks both professional reviews and user-contributed scores. To get a sense of the differences between the preferences of professional reviewers and users, we can break down their ratings by genre. 
+          </p>
+
+          <div class='row'>
+            <div class='col-lg-6'>
+              <img src='images/text_gen_games/critic_heatmap.png'>
+              <p class='fig-caption'> Heatmap for critics</p>
+            </div>
+
+
+            <div class='col-lg-6'>
+              <img src='images/text_gen_games/user_heatmap.png'>  
+              <p class='fig-caption'> Heatmap for users</p> 
+            </div>
+          </div>
+
+          <p> We can find points of agreement and disagreement here. For instance, both critics and users seem to agree that 2015 was a particularly good year for Action RPGs. However, users tend to be much harsher overall with sports games than critics might be. That might be useful information for game industry professionals trying to interpret ratings coming in for new games.</p>
+
+          <p> There are many other business-analysis questions we could answer, but for now we'll turn our attention to the snyopses, which will be used in our text generation project. </p>
+
+          <p> The first thing we might want to do is get a sense of the common terms used in these synopsis. We can take a simple bag of words approach and remove common English stop words (along with a few custom additions that are unhelpful, like "players" or "experience") and then visualize the most common uni-, bi- and trigrams. </p>
+
+          <div class='row'>
+            <div class='col-lg-4 py-3'>
+              <img src='images/text_gen_games/unigrams.png'>
+            </div>
+
+            <div class='col-lg-4 py-3'>
+              <img src='images/text_gen_games/bigrams.png'>
+            </div>
+
+            <div class='col-lg-4 py-3'>
+              <img src='images/text_gen_games/trigrams.png'>
+            </div>
+          </div>
+
+          <p> It's interesting to see the term "co-op" branch off into the different kinds of co-op available; this also seems consistent with the general perception of a push for more co-op in game development in the late 2010s (e.g., the popularity of Destiny and its imitators). </p>
+          <p> It's also a bit surprising to see the term "mega man" come up so often. That might be worth investigating. </p>
           
 
           <!-- Fourth Section -->
-          <h3 class="blog-post-title">Finding Intraday Data </h3>
+          <h3 class="blog-post-title">Text Gen Basics and LSTM Models </h3>
           <hr>
 
+          <p>
+            While GANs and VAEs (Generative Adversarial Networks and Variational Auto-Encoders, respectively) are effective models capable of generating plausible new data, in 2015 Andrej Karpthay demonstrated that <a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/" target='_blank'>simple RNNs could also be used to generate text.</a>
+          </p>
+
+          <p>
+            In the paper, RNNs with LSTM layers were used to learn a character-level language model and predict the next character given a sequence of preceding characters. The predicted character could be appended to the sequence and fed back into the model. Repeating this process could generate a string of new text.  
+          </p>
+
+          <p>
+            One other important element is the “temperature”; temperature controls how a character is selected from the probability distribution created by the language model. With a low-temperature, likely characters will be selected. With a high-temperature, unlikely characters have a high chance of being selected. Low temperatures risk creating repetitive samples, while high temperatures risk gibberish. A balance is generally ideal.   
+          </p>
+
+          <p>
+            We can take a look at how this approach does with generating a new game synopsis. To prepare the data, we need to:
+          </p>
+
+          <ol>
+            <li> Get the data ready: we need to extract the summaries and filter out summaries with non-English characters (to simplify things) </li>
+            <li> Create samples and labels: the summaries should then be split into samples and labels, and vectorized on a character-level</li>
+            <li> Build and train a model: we next build our LSTM model and train it for multi-class classification (predicting which character is next)</li>
+            <li> Test the model's output: we can now generate some samples and see how it does </li>
+          </ol>
+
+          <p> 
+            See below for a TensorFlow implementation largely adapted from <a href="https://learning.oreilly.com/library/view/hands-on-machine-learning/9781492032632/" target='_blank'> Hands-on Machine Learning</a> and <a href='https://www.oreilly.com/library/view/deep-learning-with/9781617294433/' target='_blank'> Deep Learning with Python</a>
+          </p> 
+
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tensorFlowModal">
+            TensorFlow Implementation
+          </button>
+
+          <!-- Modal -->
+          <div class="modal fade" id="tensorFlowModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-fullscreen-sm-down">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">Example Code for CF Recommender </h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <code>
+                  ########## 1 -- Getting the data in shape ##########
+
+                  import pandas as pd
+                  import tensorflow as tf
+                  import numpy as np
+                  import random
+                  import sys
+                  from keras import models, layers 
+                  
+                  # load in the dataset
+                  data = pd.read_csv('game_data_clean.csv')
+
+                  # filter for English/ASCII only summaries
+                  def is_english(summary):
+                  &nbsp;&nbsp;try:
+                  &nbsp;&nbsp;&nbsp;&nbsp;summary.encode(encoding='utf-8').decode('ascii')
+                  &nbsp;&nbsp;except UnicodeDecodeError:
+                  &nbsp;&nbsp;&nbsp;&nbsp;return False
+                  &nbsp;&nbsp;else:
+                  &nbsp;&nbsp;&nbsp;&nbsp;return True
+                      
+                  summaries = [summary for summary in data.summary if is_english(summary)]
+
+                  # get the unique chars and create an index
+                  chars = sorted(list(set("".join(summaries))))
+                  char_indices = dict((char, chars.index(char)) for char in chars)
+
+
+                  ########## 2 -- Creating Samples and Labels ##########
+
+                  # decide on a number of steps and a shift (stride) length
+                  n_steps = 100
+                  shift = 10 
+
+                  # extract the samples and targets
+                  samples = []
+                  targets = []
+
+                  for summary in summaries:
+                  &nbsp;&nbsp;for i in range(0, len(summary) - n_steps, shift):
+                  &nbsp;&nbsp;&nbsp;&nbsp;samples.append(summary[i: i+n_steps])
+                  &nbsp;&nbsp;&nbsp;&nbsp;targets.append(summary[i+n_steps])
+                          
+                  # vectorize the samples and targets with the char_index
+                  x = np.zeros((len(samples), n_steps, len(chars)), dtype=np.bool)      
+                  y = np.zeros((len(samples), len(chars)), dtype=np.bool)              
+                  for i, sentence in enumerate(samples):                               
+                  &nbsp;&nbsp;for t, char in enumerate(sentence):                                
+                  &nbsp;&nbsp;&nbsp;&nbsp;x[i, t, char_indices[char]] = 1                                
+                  &nbsp;&nbsp;y[i, char_indices[targets[i]]] = 1   
+
+
+                  ########## 3 -- Building and Training a Model ##########
+
+                  # create a model using the functional API
+                  def make_model(input_shape):
+                      
+                  &nbsp;&nbsp;# set the input
+                  &nbsp;&nbsp;input_layer = layers.Input(shape=input_shape)
+                      
+                  &nbsp;&nbsp;# first layer
+                  &nbsp;&nbsp;LSTM1 = layers.LSTM(units=128, return_sequences=True)(input_layer)
+                  &nbsp;&nbsp;LSTM1 = layers.Dropout(0.5)(LSTM1)
+                      
+                  &nbsp;&nbsp;LSTM2 = layers.LSTM(units=128, return_sequences=False)(LSTM1)
+                  &nbsp;&nbsp;LSTM2 = layers.Dropout(0.5)(LSTM2)
+                      
+                  &nbsp;&nbsp;output_layer = layers.Dense(len(chars), activation='softmax')(LSTM2)
+                      
+                  &nbsp;&nbsp;return models.Model(inputs=input_layer, outputs=output_layer)
+
+                  test_model = make_model(input_shape=x.shape[1:])
+                  #test_model.summary() # check the model if having doubts
+
+                  # set a batch size and the number of epochs
+                  batch_size = 32
+                  epochs=60
+
+                  test_model.compile(
+                  &nbsp;&nbsp;optimizer = 'rmsprop',
+                   &nbsp;&nbsp;loss='categorical_crossentropy')
+
+                  history = test_model.fit(x,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;batch_size=batch_size,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;epochs=epochs,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;validation_data=None,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shuffle=True,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;verbose=1
+                                          )
+
+
+
+                  ########## 4 -- Testing the Model's Output ##########
+                  import sys
+
+                  # create a sampling function
+                  def sample(preds, temperature):
+                  &nbsp;&nbsp;preds = np.asarray(preds).astype('float64') # get the inital prob dist
+                  &nbsp;&nbsp;preds = np.log(preds) / temperature # redistribute based on temp
+                  &nbsp;&nbsp;exp_preds = np.exp(preds)
+                  &nbsp;&nbsp;preds = exp_preds / np.sum(exp_preds) # normalize
+                  &nbsp;&nbsp;probas = np.random.multinomial(1, preds, 1)
+                      
+                  &nbsp;&nbsp;return np.argmax(probas)
+
+                  # set a seed for the model to work with
+                  seed = 'Gorplox Adventure is a brand new experience from Quest Games. Set in a'
+                  seed = seed.rjust((100-len(seed)), " ")
+
+                  # set the length of the output string
+                  string_length = 150
+
+                  # get a set of output strings at different temperatures to compare
+                  for temperature in [0.2, 0.5, 1.0, 1.2]:
+                  &nbsp;&nbsp;print(f'------- Temperature: {temperature}')
+                  &nbsp;&nbsp;sys.stdout.write(fixed_seed)
+                  &nbsp;&nbsp;generated_text = ''.join(fixed_seed)
+                      
+                  &nbsp;&nbsp;for i in range(string_length):
+                  &nbsp;&nbsp;&nbsp;&nbsp;sampled = np.zeros((1, n_steps, len(chars)))
+                  &nbsp;&nbsp;&nbsp;&nbsp;for t, char in enumerate(generated_text):
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sampled[0, t, char_indices[char]] = 1.
+                              
+                 &nbsp;&nbsp;&nbsp;&nbsp;preds = test_model.predict(samples, verbose=0)[0]
+                 &nbsp;&nbsp;&nbsp;&nbsp;next_index = sample(preds, temperature)
+                 &nbsp;&nbsp;&nbsp;&nbsp;next_char = char[next_index]
+                          
+                 &nbsp;&nbsp;&nbsp;&nbsp;generated_text += next_char
+                 &nbsp;&nbsp;&nbsp;&nbsp;generated_text = generated_text[1:]
+                          
+                 &nbsp;&nbsp;&nbsp;&nbsp;sys.stdout.write(next_char)
+                  </code>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class='pt-3'>
+            At temperatures above 0.5, we tend to get nothing especially comprehensible, and at temperatures of around 0.2 the model has a tendency to fall into a repetitive loop. However, at around 0.5, we can sometimes get output strings that are roughly coherent. For example, with the seed string "Glorbox Adventure 3D is", we get the following: 
+          </p>
+
+          <p class='textGen-results'>
+            Glorbox Aventure 3D is a post-ashem and Face and story and the lives of the world. Explore a special world choices a group of colories in the classic story-based gameplay
+          </p>
+
+          <p> 
+            While this is unlikely to fool a human reader, it is still fairly impressive given that the model was tasked with learning English with only about 170,000 character strings.
+          </p>
+
+          <p>
+            We can, however, do better. 
+          </p>
 
           <!-- Fifth Section --> 
-          <h3 class="blog-post-title">Modeling </h3>
+          <h3 class="blog-post-title">HuggingFace and The Rise of the Transformers </h3>
           <hr>
 
+          <p>
+            <a href='https://en.wikipedia.org/wiki/Transformer_(machine_learning_model)' target='_blank'> Transfomers </a> are a huge leap forward for NLP. While RNNs struggled with locating the relevant sections of an input sequence on especially long sequences, transformers use <a href='https://en.wikipedia.org/wiki/Attention_(machine_learning)' target="_blank"> attention mechanisms </a> to find relevant portions of the sequence. 
+          </p>
+
+          <p>
+            Transformer models trained on tons of data have been able to achieve remarkable performance on a range of NLP tasks. Of particular relevance right now is <a href='https://en.wikipedia.org/wiki/GPT-2' target="_blank"> OpenAI's GPT-2 model. </a> It has been shown to be capable of generating <a href='https://openai.com/blog/better-language-models/' target='_blank'>plausible text</a>, and with some fine-tuning, we can adapt it to our ends as well.  
+          </p>
+
+          <p>
+            The easiest way to do so is with the <a href='https://huggingface.co/transformers/' target='_blank'>HuggingFace Transformers library</a>. With APIs for accessing state-of-the-art models, it's very easy to get a fine-tuned model up and running with HuggingFace. Below is an example implementation using HuggingFace and Pytorch.
+          </p>
+
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#huggingFaceModal">
+            HuggingFace/Pytorch Implementation
+          </button>
+
+          <!-- Modal -->
+          <div class="modal fade" id="huggingFaceModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-fullscreen-sm-down">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">Example Code for CF Recommender </h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <code>
+                  ########## 1 -- Getting the data in shape ##########
+
+                  ### This part stays roughly the same!
+
+
+                  import torch
+                  import pandas as pd
+                  from transformers import AutoTokenizer
+                  from torch.utils.data import Dataset, DataLoader
+                  from transformers import GPT2LMHeadModel, Trainer, TrainingArguments
+
+                  
+                  # load in the dataset
+                  data = pd.read_csv('game_data_clean.csv')
+
+                  # filter for English/ASCII only summaries
+                  def is_english(summary):
+                  &nbsp;&nbsp;try:
+                  &nbsp;&nbsp;&nbsp;&nbsp;summary.encode(encoding='utf-8').decode('ascii')
+                  &nbsp;&nbsp;except UnicodeDecodeError:
+                  &nbsp;&nbsp;&nbsp;&nbsp;return False
+                  &nbsp;&nbsp;else:
+                  &nbsp;&nbsp;&nbsp;&nbsp;return True
+                      
+                  summaries = [summary for summary in data.summary if is_english(summary)]
+
+                  # however, this time not char-level but word-level tokenizing
+
+
+                  ########## 2 -- Creating the Dataset ##########
+
+                  # load in the correct tokenizer
+                  tokenizer = AutoTokenizer.from_pretrained('gpt2')
+                  tokenizer.pad_token = tokenizer.eos_token
+
+                  # set a length; we'll go for longer this time
+                  MAX_LENGTH = 200
+
+                  # create a custom Dataset class
+                  class SummaryData(Dataset):
+                  &nbsp;&nbsp;def __init__(self, data, tokenizer, gpt2_type = 'gpt2', max_length = MAX_LENGTH):
+                  &nbsp;&nbsp;&nbsp;&nbsp;self.tokenizer = tokenizer
+                  &nbsp;&nbsp;&nbsp;&nbsp;self.max_length = max_length
+                  &nbsp;&nbsp;&nbsp;&nbsp;self.input_ids = []
+                  &nbsp;&nbsp;&nbsp;&nbsp;self.attn_mask = []
+
+                  &nbsp;&nbsp;&nbsp;&nbsp;for item in data:
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;encodings_dict = tokenizer('<|startoftext|>'+item+'<|endoftext|>',
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;truncation=True,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;max_length=self.max_length,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;padding='max_length')
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.input_ids.append(torch.tensor(encodings_dict['input_ids']))
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.attn_mask.append(torch.tensor(encodings_dict['attention_mask']))
+
+                  &nbsp;&nbsp;def __len__(self):
+                  &nbsp;&nbsp;&nbsp;&nbsp;return len(self.input_ids)
+
+                  &nbsp;&nbsp;def __getitem__(self, idx):
+                  &nbsp;&nbsp;&nbsp;&nbsp;return self.input_ids[idx], self.attn_mask[idx]
+
+                  # instantiate the dataset
+                  dataset = SummaryData(summaries, tokenizer)
+
+
+                  ########## 3 -- Loading in and Fine-tuning the Model ##########
+
+                  # load in model
+                  model = GPT2LMHeadModel.from_pretrained('gpt2')
+
+                  training_args = TrainingArguments(
+                  &nbsp;&nbsp;&nbsp;&nbsp;output_dir = '/results',
+                  &nbsp;&nbsp;&nbsp;&nbsp;num_train_epochs=4,
+                  &nbsp;&nbsp;&nbsp;&nbsp;per_device_train_batch_size = 8,
+                  &nbsp;&nbsp;&nbsp;&nbsp;warmup_steps = 100,
+                  &nbsp;&nbsp;&nbsp;&nbsp;weight_decay = 0.01,
+                  &nbsp;&nbsp;&nbsp;&nbsp;#max_steps = 5,
+                  &nbsp;&nbsp;&nbsp;&nbsp;logging_dir = '/results'
+                  )
+
+                  def dummy_data_collector(features):
+                  &nbsp;&nbsp;batch = {}
+                  &nbsp;&nbsp;batch['input_ids'] = torch.stack([f[0] for f in features])
+                  &nbsp;&nbsp;batch['attention_mask'] = torch.stack([f[1] for f in features])
+                  &nbsp;&nbsp;batch['labels'] = batch['input_ids']
+                  &nbsp;&nbsp;#result["labels"] = result["input_ids"].copy()
+                      
+                  &nbsp;&nbsp;return batch
+
+                  trainer = Trainer(model = model,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args = training_args,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;train_dataset = dataset,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data_collator = dummy_data_collector)
+
+                  # finally train the model
+                  trainer.train()
+
+
+                  ########## 4 -- Testing the Model's Output ##########
+
+                  # set a seed and tokenize it
+                  seed = "In a world where"
+
+                  seed_tokens = tokenizer.encode(seed, return_tensors='pt').to(device)
+
+                  # generate text until the output length (which includes the seed length) reaches 50
+                  greedy_output = model.generate(seed_tokens, max_length=400, do_sample=True,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;top_k = 50,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#temperature = 0.7,
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;no_repeat_ngram_size=3)
+
+                  print(tokenizer.decode(greedy_output[0], skip_special_tokens=True))
+                  </code>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           
+          <p class='pt-3'>
+            With this model, we get much more coherent results. For example, with the seed from before we got:
+          </p>
 
-          <h3 class="blog-post-title">Future Work </h3>
+          <p class='textGen-results'>
+            Glorbox Adventure 3D is a 3D platformer with a unique gameplay style. You play as a lone wolf, who is tasked with hunting down and killing all the remaining humans on the planet.
+          </p>
+          
+          <p>
+            With the seed "In a world where", we get: 
+          </p>
+
+          <p class='textGen-results'> 
+            In a world where machines can do whatever they want with the digital rights, robots will still be everywhere as the most advanced forms of entertainment technology has replaced human humans in the technology's future. It doesn't take an anthropologist to see this as inevitable, as the future is more dystopian than ever.
+          </p>
+
+
+
+          <p> We can right away see that this model does a better job with syntax and grammer. This text is much more plausible, and in fact the first example could be a real game.
+
+          <h3 class="blog-post-title">Conclusion</h3>
           <hr>
+          <p>
+            One might question the practical applications of this technology. Well, in the video game industry, it could serve as a creative tool for quick drafting and inspiration. Or for procedurally generated in game lore content. The possibilities are abundant! 
+          </p>
 
         </article>
 
