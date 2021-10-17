@@ -1,0 +1,165 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+    <!-- Custom stylesheet -->
+    <link rel='stylesheet' type='text/css' href='github_pages.css'>
+
+    <!-- Set the Title --> 
+    <title>dferan -- Disney+ v. Netflix Content Analysis </title>
+  </head>
+
+  <body>
+
+    <!-- Header -->
+    <header>
+      <div class="collapse bg-dark" id="navbarHeader">
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-8 col-md-7 py-4">
+              <h4 class="text-white" id="description">Portfolio</h4>
+              <p class="text-muted">This site contains a collection of projects related to data science and information studies.</p>
+            </div>
+            <div class="col-sm-4 offset-md-1 py-4">
+              <h4 class="text-white">Contact</h4>
+              <ul class="list-unstyled">
+                <li><a href="https://www.linkedin.com/in/darragh-feran-697760202" target='_blank' class="text-white">Contact me on LinkedIn</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="navbar navbar-dark bg-dark shadow-sm">
+        <div class="container">
+
+          <a href="index.html" class="navbar-brand d-flex align-items-center"><strong>dferan</strong></a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarHeader" aria-controls="navbarHeader" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span> 
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="py-5 container">
+
+      <!-- Title Card -->
+      <div class="p-4 p-md-5 mb-4 text-white rounded bg-dark">
+        <div class="col-md-12 px-0 text-center">
+          <h1 class="display-4 fst-italic">Disney+ v. Netflix: Content Analysis with Seaborn and Geopandas </h1>
+          <!-- <img class='img-fluid' src='images/rt_recommender/tomatoes_banner.png'>  -->
+          <p class="lead my-3">Examining and contextualizing the respective content inventories of two streaming bigwigs</p>
+          <br>
+          <p class="blog-post-meta pt-4">October 2021 </p>
+        </div>
+      </div>
+
+      <!-- Article Section -->
+      <div class="container">
+        <article class="blog-post">
+
+          <!-- First Section -->
+          <h3 class="blog-post-title">Introduction and Motivation</h3>
+          <hr>
+          <p>
+            The last several years have brought substantial changes to the ways in which movies and TV shows are delivered. Streaming services have had a significant impact on content distribution. Many big name producers and traditional distributors have been launching their own services in order to more directly deliver content to users (and collect valuable data in the process, presumably). 
+          </p>
+          <p>
+            The biggest of these more recent entrants to the streaming market is Disney, whose Disney+ service launched in the U.S. and a few other select countries in late 2019. The growth has been impressive. Disney+ has already surpassed 100 million subscribers and is on track to pass Netflix by late 2023 at current rates.
+          </p>
+          <img class='img-fluid' src='images/disney_netflix/sub_count.png'>
+
+          <p>
+            However, there are many unknowns at play here. Can Disney+ sustain such strong growth? Can Netflix fend off the challenge from Disney+ and other newly launched streaming services? One way to get insight into these questions might be to look at the content on offer from each service.
+          </p>
+
+          <!-- Second Section -->
+          <h3 class="blog-post-title">The Data </h3>
+          <hr>
+
+          <p>
+            Streaming services are protective of information like their subscriber count, but some data can be found here and there (often from quarterly reports). The data used for Netflix’s subscriber count can be found <a href='https://www.statista.com/statistics/250934/quarterly-number-of-netflix-streaming-subscribers-worldwide/' target="_blank">here</a>, and for Disney+ <a href='https://www.businessofapps.com/data/disney-plus-statistics/' target="_blank">here</a>.
+          </p>
+
+          <p>
+            The data on titles is from two Kaggle Datasets (Netflix: <a href='https://www.kaggle.com/shivamb/netflix-shows' target="_blank">here</a>; Disney+: <a href='https://www.kaggle.com/shivamb/disney-movies-and-tv-shows' target='_blank'>here</a>).  It is generally not assumed this data is 100% correct, but it is plausible enough to give a good idea of the titles available on each service. 
+
+          </p>
+
+          <!-- Third Section -->
+          <h3 class="blog-post-title">General Inventory Comparison </h3>
+          <hr>
+
+          <p>
+            As a starting point, we may look at how much content a monthly subscription gives us access to. However, there is an important caveat here; a naive approach with the Netflix dataset is likely to be misleading. That is, content regularly disappears from Netflix, and it’s not clear that this fact is tracked on this dataset. It is thus likely a straight-line sum is not actually reflective of available content; <a href='https://www.comparitech.com/blog/vpn-privacy/netflix-statistics-facts-figures/' target="_blank"> other estimates have Netflix libraries generally containing about 4100-5800 titles in 2021 (depending on the country) </a>. 
+          </p>
+
+          <img class='img-fluid' src='images/disney_netflix/content_inventory.png'>
+
+          <p>
+            It is likely fair to say, however, that there is both more content on Netflix and more content being added. While Netflix did seem to be winding down new acquisitions and productions after about 2019, they have since picked up the pace again, possibly in light of increasing competition. Disney has plenty of room to increase their additions, though that may compromise quality and be its own challenge.  
+          </p>
+          
+
+          <!-- Fourth Section -->
+          <h3 class="blog-post-title">Ratings and Target Audiences </h3>
+          <hr>
+
+          <p>
+            One way to determine the audience a service caters to is by using ratings as a rough proxy. We can examine the distribution of ratings given to each service's respective inventory to get an understanding of the target audiences.
+          </p>
+
+          <img class='img-fluid' src='images/disney_netflix/ratings.png'>
+
+          <p>
+            Disney+ does not have any content rated above TV-14. While this doesn’t necessarily mean all their content is “kid-only” or even “kid-oriented” (e.g., The Mandalorian is a slow-burn space western rated TV-14 whose primary audience, I would wager, is not children), it does exclude certain kinds of stories that might appeal to adults (e.g., those featuring sex or drugs). 
+          </p>
+
+          <p>
+            Netflix, on the other hand, has a more balanced set of ratings, though it tends to lean towards more adult-oriented; TV-MA is the most common rating. This suggests that the two services appeal to different audiences, or possbily to memebrs of the same audience finding themselves in different moods; from a ratings perspective, they don't seem to be in direct competition.  
+          </p>
+
+
+          <!-- Fifth Section --> 
+          <h3 class="blog-post-title">Mapping out International Content </h3>
+          <hr>
+          <p>
+            One final area we will address here is international content. In October 2021, Netflix saw its investments in international content pay off huge with Squid Game, a South Korean series that became popular enough to inspire an <a href='https://www.economist.com/graphic-detail/2021/10/15/squid-game-is-only-the-latest-netflix-hit-to-break-the-language-barrier' target="_blank">Economist article </a>. A look at the map belows reveals that Netflix has made investments in productions and acquisitions in many different countries, and Disney+ has hardly begun to source content globally. 
+          </p>
+
+          <img class="img-fluid" src='images/disney_netflix/overall_map.png'>
+
+          <p>
+            Netflix seems to be making a big bet on Indian content, most likely in hopes that they can win over the emerging internet-enabled Indian market in a similar manner to their success in South Korea and Japan. For Disney+, the biggest source of non-North American content has been the U.K. 
+          </p>
+          <p>
+            While it’s clear Disney+ has yet to roll out localized content strategies in the same way Netflix has, one might question whether they ultimately need to. Disney’s mainline movie franchises and studios (the Marvel Cinematic Universe, Star Wars, Pixar) continue to be extremely popular internationally. It’s unclear at this point whether Disney will need the same kind of localized content to succeed internationally; there is reason to believe they can manage on the strength of their established IP alone. 
+          </p>
+
+          <h3 class="blog-post-title">Conclusions </h3>
+          <hr>
+
+          <p>
+            One conclusion to draw from this is that the framing of Netflix v. Disney is conceptually flawed, as a zero-sum competition. Recent studies have shown that <a href='https://variety.com/2021/digital/news/us-consumers-pay-average-47-dollars-monthly-svod-streaming-1234890534/' target="_blank"> about half of U.S. consumers subscribe to at least four streaming services </a>. 
+
+            Netflix has a wider-variety of adult-oriented content, and has done a better job of poistioning itself as a place for local content as well (which can often has cross-clutural appeal as well). Disney+, on the other hand, has stuck to producing largely "safe" or family-oriented U.S.-centric (English-language) content, and there isn't any reason to believe its collection of IP will be less popular when piped through internet lines. There is a plausible space for both of these services to meet different demands with the same consumers; it is plausible to believe that both Netflix and Disney+ can co-exist.
+          </p>
+
+          <p>
+            Where they are more likely to compete with each other is not for consumers directly but for on- and off-camera talent. The Marvel Cinematic Universe continues to grow and lock-up actors in Hollywood (so much so that they've begun <a href='https://www.digitalspy.com/movies/a37960413/eternals-gemma-chan-sersi-captain-marvel/' target="_blank">recycling</a>, while Netflix has <a href='https://www.nytimes.com/2021/04/19/business/media/netflix-knives-out-deal.html' target="_blank">thrown around money</a> to retain directors and content-makers. The real streaming wars are likely to be conducted off-camera.  
+          </p>
+
+        </article>
+
+    </div>
+
+
+
+
+  </main>    
+
+  </body>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
+</html>
