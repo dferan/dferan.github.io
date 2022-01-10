@@ -1,0 +1,151 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+    <!-- Custom stylesheet -->
+    <link rel='stylesheet' type='text/css' href='github_pages.css'>
+
+    <!-- Set the Title --> 
+    <title>dferan -- Kaggle Big Data Bowl 2022</title>
+  </head>
+
+
+  <body>
+
+    <!-- Header -->
+    <header>
+      <div class="collapse bg-dark" id="navbarHeader">
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-8 col-md-7 py-4">
+              <h4 class="text-white" id="description">Portfolio</h4>
+              <p class="text-muted">This site contains a collection of projects related to data science and information studies. Check out the READ(about)ME <a href='about_me.html'>here</a>.</p>
+            </div>
+            <div class="col-sm-4 offset-md-1 py-4">
+              <h4 class="text-white">Contact</h4>
+              <ul class="list-unstyled">
+                <li><a href="https://www.linkedin.com/in/darragh-feran-697760202" target='_blank' class="text-white">Contact me on LinkedIn</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="navbar navbar-dark bg-dark shadow-sm">
+        <div class="container">
+          <a href="index.html" class="navbar-brand d-flex align-items-center"><strong>dferan</strong></a>
+
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarHeader" aria-controls="navbarHeader" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span> 
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="py-5 container">
+
+      <!-- Title Card -->
+      <div class="p-4 p-md-5 mb-4 text-white rounded bg-dark">
+        <div class="col-md-12 px-0 text-center">
+          <h1 class="display-4 fst-italic">Kaggle Big Data Bowl 2022: Rethinking Field Goal Kicking</h1>
+          <!-- <img class='img-fluid' src='images/rt_recommender/tomatoes_banner.png'>  -->
+          <p class="lead my-3">A new, more robust metric for evaluating field goal kicking performance  </p>
+          <br>
+          <p class="blog-post-meta pt-4">January 2022 </p>
+        </div>
+      </div>
+
+      <!-- Article Section -->
+      <div class="container">
+        <article class="blog-post">
+
+          <!-- First Section -->
+          <h3 class="blog-post-title">Introduction and Motivation</h3>
+          <hr>
+          <p>
+            <a href = 'https://www.kaggle.com/'>Kaggle</a> is a popular machine learning and data science site. They often host contests aimed at solving real-world problems for various organizations. For the last few years, they’ve hosted the <a href='https://www.kaggle.com/c/nfl-big-data-bowl-2022'>NFL Big Data Bowl</a>, which challenges participants to leverage NFL data to come up with meaningful insights. This year’s contest focused on special teams play, an often overlooked part of the game. 
+          </p>
+
+          <p>
+            The work done here was part of an entry to this year's Big Data Bowl. The exact deliverable and question to be addressed was left open-ended, and here we focus on field goal kicking performance. 
+          </p>
+
+          <!-- Second Section -->
+          <h3 class="blog-post-title">Evaluating FG Kicking </h3>
+          <hr>
+
+          <p>
+            Generally, on broadcasts and in commentary, FG kickers are evaluated and discussed in terms of simple accuracy, i.e., kicks made / kicks attempted. However, this overlooks something obvious and crucial; not all field goals are equal, both in terms of frequency and difficulty. We can take a look at the probability distribution of success at different parts of the field (across all kickers, from 2018-2020).  
+          </p>
+          <div class='row'> 
+            <div class = 'col-lg-6'>
+              <img src = 'images/big_data_bowl/accuracy_by_yardline.png'> 
+              
+            </div>
+            <div class='col-lg-6'>
+              <img src='images/big_data_bowl/frequency_by_yardline.png'>
+              
+            </div>
+          </div>
+
+          <p>
+            While simple accuracy may be an easy and quick metric to evaluate FG perfomance with, it's clearly not suited to capturing much nuance; a kicker who only makes attempts from the <10 yard line would not be very useful, even if they had 100% accuracy. We need a more robust and compelete metric to evaluate kickers with.
+          </p>
+
+          <!-- Third Section -->
+          <h3 class="blog-post-title">Rethinking Field Goal Performance </h3>
+          <hr>
+          
+          <p>
+            So what can we do instead? Well, first, we want to adjust for the average probability of success at a given point on the field; making easier kicks is less impressive than making more difficult ones. However, we also want this new metric to be a fairly complete measure of a kicker’s performance; performing well on the most frequent kick ranges is more valuable than performing well at ranges that are rare (this is a detable point; more on this towards the end).
+          </p> 
+
+          <p>
+            Our new metric will be called "WAAA": weighted accuracy above average. To calculate WAAA, we first split the field up into 5 yard zones (e.g., 0-5, 5-10, etc.). We calculate the average probability of success in these ranges, and subtract those averages from a given player's probability of success at that range. We then multiply this difference by the frequency of a kick at that range, and finally we sum all this together to arrive at a single metric. Our data looks something like this:
+          </p>
+
+          <img class = 'img-fluid' src = 'images/big_data_bowl/waaa_data.png'>
+
+          <p>
+             Here we have the weighted accuracies above average for the top ten FG kickers in the NFL over this period. The WAAA (note that sometimes it is written as "WAAR", with the "R" being for replacement level, a concept I initially borrowed from MLB analysis but after rethinking decided was a poor fit for the NFL) is then the straight sum of these weighted accuracies. For a sanity check, we can query our dataset (a collection of CSVs resembling output from a relational database) and get the names of the top ten players. 
+          </p>
+
+          <img class = 'img-fluid' src = 'images/big_data_bowl/top_ten_details.png'>
+
+          <p>
+            As we can see, this top ten includes some of the kickers considered league greats, like Justin Tucker and Mason Crosby. However, there are also some lesser known kickers on the list, and using this new metric might help teams discover previously unappreciated talent. 
+          </p>
+
+          <!-- Fourth Section -->
+          <h3 class="blog-post-title">When to WAAA and When Not to WAAA </h3>
+          <hr>
+
+          <p>
+             As we have (hopefully convincingly) argued, using simple accuracy as a measure of field goal perfomance does not capture nuances in a kicker's performance. This new metric allows for a more direct comparison to league averages, and weights kicks according to the frequency with which they occur, giving a more accurate overall picture of a kicker's performance in relation to other kickers. 
+          </p>
+          
+          <p>
+            However, something to be noted is that this metric de-emphasizes long-shot attempts, for the simple reason that they are relatively rare. The assumption is thus that they are less likely to occur, and thus less likely to affect the outcome of the game. However, were a unqiue kicker to emerge who performed exceptionally well on long-distance kicks and poorly in other areas, WAAA alone would likely underrate thier contributions to the team; it is indeed entirely reasonable for a team to carry two kickers and to specialize, were that the case. Thus, while WAAA is an improvement over simple accuracy, it should not be the sole metric at play. More work could be done here, is the upshot! 
+          </p>
+
+          <p>
+             
+          </p>
+
+          <p>
+            
+          </p>
+        </article>
+
+    </div>
+
+
+
+
+  </main>    
+
+  </body>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
+</html>
