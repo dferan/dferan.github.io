@@ -9,7 +9,7 @@
     <link rel='stylesheet' type='text/css' href='github_pages.css'>
 
     <!-- Set the Title --> 
-    <title>dferan -- Text Generation with MetaCritic Data </title>
+    <title>dferan -- Text Generation, from LSTMs to Fine-Tuning GPT-2 </title>
   </head>
 
   <body>
@@ -48,7 +48,7 @@
       <!-- Title Card -->
       <div class="p-4 p-md-5 mb-4 text-white rounded bg-dark">
         <div class="col-md-12 px-0 text-center">
-          <h1 class="display-4 fst-italic">Text Generation with MetaCritic data</h1>
+          <h1 class="display-4 fst-italic">Text Generation, from LSTMs to Fine-Tuning GPT-2</h1>
           <!-- <img class='img-fluid' src='images/rt_recommender/tomatoes_banner.png'>  -->
           <p class="lead my-3">NLP Analysis and Text Generation with HuggingFace Transformers</p>
           <br>
@@ -65,32 +65,35 @@
           <hr>
 
           <p>
-            This project, undertaken during a government mandated two-week quarantine, combines text generation modeling with analysis of the video game market. Having been away from video games for a while, I wanted to get a sense of the market over the last few years. I also wanted to explore simple generative models, and generating video game synopses seemed like a fun application to pursue.
+            The very public success and at-home availability (thanks to <a href='https://huggingface.co/'>Huggingface</a>) of recent large-scale, cutting edge NLP models inspired me to learn about and try my hand at text generation. While there is no shortage of text data to experiment with, a recent lapse into video gaming prompted me to try using video game summaries scraped from MetaCritic (using <a href= 'https://www.selenium.dev/'>Selenium</a>, if I remember correctly). There are four parts to this project:
           </p>
-          
+          <ol>
+            <li>Cleaning and EDA: Sorting out some basic data cleaning and exploring the data and generating a few quick word clouds</li>
+            <li>Character-level LSTMs: A venerable “classic” (from 2017!) method of text generation. </li>
+            <li>Undirected Token-level Transformers: A quick spin-up of a more successful approach to text generation</li>
+            <li>Conditional Token-level Transformers: Adding keywords to training and inference to provide some rudimentary control over the model’s output</li>
+
+          </ol>
 
 
           <!-- Second Section -->
-          <h3 class="blog-post-title">The Data </h3>
+          <h3 class="blog-post-title">I: Cleaning and EDA </h3>
           <hr>
 
           <div class='row'>
             <div class='col-lg-8'>
+              <h4> The Data </h4>
               <p>
-                We’ll be using data taken from MetaCritic, covering games from 2015-2020 with at least seven reviews. At the moment, we are interested in metadata about the games and their synopses; we won’t bother scraping reviews.
-              </p>
-
-              <p>
-                Before we can put the data to use, however, there a few issues to resolve:
+                The MetaCritic data covers games from 2015-2020 with at least seven reviews. Before we can put the data to use there a few issues to resolve:
               </p>
               <ul>
-                <li> Null values, especially for the "publisher" and "num_players" fields </li>
-                <li> MetaCritic allows for a large number of categorical values for the number of players listed; this can be consolidated a bit </li>
+                <li> Null values (esp. in "publisher" and "num_players") </li>
+                <li> A large number of categorical values "num_players" </li>
                 <li> The user ratings should be converted to a numerical data type</li>
-                <li> Similarly, the release date column should be converted to a datetime type for easier hanling</li>
+                <li> The release dates should be converted to a datetimes for easier hanling</li>
               </ul>
               <p> 
-                Once we finish up with that, we can move onto some simple EDA and visualizations 
+                Once we finish up with that, we can move onto some simple EDA and visualizations.
               </p>
             </div>
 
@@ -102,11 +105,10 @@
           </div>
 
           <!-- Third Section -->
-          <h3 class="blog-post-title">EDA and Visualizations </h3>
-          <hr>
+          <h4>Visualizations </h4>
 
           <p>
-            There are many different questions we could address with this data. For example, MetaCritric tracks both professional reviews and user-contributed scores. To get a sense of the differences between the preferences of professional reviewers and users, we can break down their ratings by genre. 
+            For fun, we can take a look at the reviews quickly. To get a sense of the differences between the preferences of professional reviewers and users, we can break down their ratings by genre. 
           </p>
 
           <div class='row'>
@@ -122,11 +124,11 @@
             </div>
           </div>
 
-          <p> We can find points of agreement and disagreement here. For instance, both critics and users seem to agree that 2015 was a particularly good year for Action RPGs. However, users tend to be much harsher overall with sports games than critics might be. That might be useful information for game industry professionals trying to interpret ratings coming in for new games.</p>
+          <p> There are both points of agreement and disagreement here. Both critics and users seem to agree that 2015 was a particularly good year for Action RPGs. However, users tend to be more critical overall with sports games than  professional critics.</p>
 
-          <p> There are many other business-analysis questions we could answer, but for now we'll turn our attention to the snyopses, which will be used in our text generation project. </p>
+          <p> There are many other questions we could answer, but we'll turn our attention to the snyopses for now.</p>
 
-          <p> The first thing we might want to do is get a sense of the common terms used in these synopsis. We can take a simple bag of words approach and remove common English stop words (along with a few custom additions that are unhelpful, like "players" or "experience") and then visualize the most common uni-, bi- and trigrams. </p>
+          <p> We can get a sense of the common terms used in these synopses by visualzing common terms from a simple bag of words (making sure to remove some common English stop words and a few custom additions that are unhelpful, like "players" or "experience").</p>
 
           <div class='row'>
             <div class='col-lg-4 py-3'>
@@ -142,35 +144,34 @@
             </div>
           </div>
 
-          <p> It's interesting to see the term "co-op" branch off into the different kinds of co-op available; this also seems consistent with the general perception of a push for more co-op in game development in the late 2010s (e.g., the popularity of Destiny and its imitators). </p>
-          <p> It's also a bit surprising to see the term "mega man" come up so often. That might be worth investigating. </p>
+          <p> We can see some terms pop out that seem in line with general trends in video gaming over the past few years (e.g., "co-op"). </p>
           
 
           <!-- Fourth Section -->
-          <h3 class="blog-post-title">Text Gen Basics and LSTM Models </h3>
+          <h3 class="blog-post-title">II: Text Gen Basics and LSTM Models </h3>
           <hr>
 
           <p>
-            While GANs and VAEs (Generative Adversarial Networks and Variational Auto-Encoders, respectively) are effective models capable of generating plausible new data, in 2015 Andrej Karpthay demonstrated that <a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/" target='_blank'>simple RNNs could also be used to generate text.</a>
+            Generative Adversarial Networks (GANs) and Variational Auto-Encoders (VAEs) are popular and effecitve approaches to modeling capable of generating plausible new data in a variety of domains. However, in the NLP domain, Andrej Karpthay demonstrated in 2015 that <a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/" target='_blank'>simple RNNs could also be used to generate text.</a>
           </p>
 
           <p>
-            In the paper, RNNs with LSTM layers were used to learn a character-level language model and predict the next character given a sequence of preceding characters. The predicted character could be appended to the sequence and fed back into the model. Repeating this process could generate a string of new text.  
+            In the paper, RNNs with LSTM layers were used to learn a character-level language model and predict the next character given a sequence of preceding characters. The predicted character was then appended to the sequence and fed back into the model and the process repeated until a string of text had been generated.  
           </p>
 
           <p>
-            One other important element is the “temperature”; temperature controls how a character is selected from the probability distribution created by the language model. With a low-temperature, likely characters will be selected. With a high-temperature, unlikely characters have a high chance of being selected. Low temperatures risk creating repetitive samples, while high temperatures risk gibberish. A balance is generally ideal.   
+            The concept of “temperature” was important to this process; temperature controls how a character is selected from the probability distribution created by the language model. With a low-temperature, likely characters will be selected. With a high-temperature, unlikely characters have a higher chance of being selected. Low temperatures risk creating repetitive samples, while high temperatures risk gibberish. A balance is generally ideal.   
           </p>
 
           <p>
-            We can take a look at how this approach does with generating a new game synopsis. To prepare the data, we need to:
+            We can try this ourselves with our game summaries. We need to:
           </p>
 
           <ol>
             <li> Get the data ready: we need to extract the summaries and filter out summaries with non-English characters (to simplify things) </li>
             <li> Create samples and labels: the summaries should then be split into samples and labels, and vectorized on a character-level</li>
-            <li> Build and train a model: we next build our LSTM model and train it for multi-class classification (predicting which character is next)</li>
-            <li> Test the model's output: we can now generate some samples and see how it does </li>
+            <li> Build and train a model: we next build our LSTM model and train it for multi-class classification (i.e., predicting which character comes next)</li>
+            <li> Test the model's output: we can now generate some samples </li>
           </ol>
 
           <p> 
@@ -345,11 +346,11 @@
           </p>
 
           <p>
-            We can, however, do better. 
+            We can do better though. 
           </p>
 
           <!-- Fifth Section --> 
-          <h3 class="blog-post-title">HuggingFace and The Rise of the Transformers </h3>
+          <h3 class="blog-post-title">III: The Rise of the Transformers</h3>
           <hr>
 
           <p>
@@ -357,7 +358,7 @@
           </p>
 
           <p>
-            Transformer models trained on tons of data have been able to achieve remarkable performance on a range of NLP tasks. Of particular relevance right now is <a href='https://en.wikipedia.org/wiki/GPT-2' target="_blank"> OpenAI's GPT-2 model. </a> It has been shown to be capable of generating <a href='https://openai.com/blog/better-language-models/' target='_blank'>plausible text</a>, and with some fine-tuning, we can adapt it to our ends as well.  
+            Transformer models trained on tons of data have been able to achieve remarkable performance on a range of NLP tasks. Of particular relevance for us now is <a href='https://en.wikipedia.org/wiki/GPT-2' target="_blank"> OpenAI's GPT-2 model. </a> It has been shown to be capable of generating <a href='https://openai.com/blog/better-language-models/' target='_blank'>plausible text</a>, and with some fine-tuning, we can adapt it to our ends as well.  
           </p>
 
           <p>
@@ -381,12 +382,10 @@
                   ########## 1 -- Getting the data in shape ##########
 
                   ### This part stays roughly the same!
-
-
                   import torch
                   import pandas as pd
                   from transformers import AutoTokenizer
-                  from torch.utils.data import Dataset, DataLoader
+                  from torch.utils.data import Dataset
                   from transformers import GPT2LMHeadModel, Trainer, TrainingArguments
 
                   
@@ -515,13 +514,61 @@
           </p>
 
 
+          <p> We can right away see that this model does a better job with syntax and grammer. This text is much more plausible, and in fact the first example could be a real game. </p>
 
-          <p> We can right away see that this model does a better job with syntax and grammer. This text is much more plausible, and in fact the first example could be a real game.
+          <p> However, we still lack control over the output; there is no real way to encourage the model to output a summary for a particular kind of game (e.g., an action game, or an RPG). </p> 
 
-          <h3 class="blog-post-title">Conclusion</h3>
+          <h3 class="blog-post-title">IV: Conditional Text Generation</h3>
           <hr>
           <p>
-            One might question the practical applications of this technology. Well, in the video game industry, it could serve as a creative tool for quick drafting and inspiration. Or for procedurally generated in game lore content. The possibilities are abundant! 
+            There are a variety of approaches to controlling the output of a generative LM, however we will go for something simple: <a target='_blank' href='https://towardsdatascience.com/conditional-text-generation-by-fine-tuning-gpt-2-11c1a9fc639d'>conditioning our samples on a set of keywords</a>. The basic idea is to have the model learn next-token probability distributions based on the preceding tokens as well as a set of keywords prepended to the sequence.  
+          </p>
+
+          <p> For our keywords, we will keep it very simple and just the genres that a game has been labelled with. Since MetaCritic apparently has over 120 genres, we will filter out genres that apply to fewer than 100 games. This leaves us with around 30 options.</p>
+
+
+          <div class='row'>
+            <div class = 'col-lg-6'>
+              <p>  The only real difference in approach here is that we add the keywords to the training samples before tokenizing. After training the model, I decided to make it into a Streamlit app for easier inference (although unfortunately the model proved too large to push to GitHub and deploy on the Cloud :\) . </p>
+
+              <p>
+                At any rate, the app interface makes it easy to play around with the settings, keywords and optional initial strings. Some example results can be seen below. 
+              </p>
+            </div>
+
+            <div class='col-lg-6'>
+              <img src='images/text_gen_games/interface.png'>
+            </div>
+          </div>
+
+
+          <div class='row'>
+            <div class='col-lg-6'>
+              <img src='images/text_gen_games/survival_ow_shooter.png'>
+              <p class='fig-caption'> Results for "Survival", "Open-World", "Shooter"</p>
+            </div>
+
+
+            <div class='col-lg-6'>
+              <img src='images/text_gen_games/simulation_sports.png'>  
+              <p class='fig-caption'> Results for "Simulation", "Sports"</p> 
+            </div>
+          </div>
+
+          <p> The keywords in this case do in fact work to add a measure of control to the model output. </p>
+
+
+
+          <h3 class="blog-post-title">Conclusions and Future Work</h3>
+          <hr>
+          <p>
+            We worked towards being able to generate novel game summaries in particular genres, and we achieved some measure of success. However, there are of course still some issues with our model's output. 
+          </p>
+          <p>
+            First, we did not attempt to learn disentangled representations, meaning that our control over the genres is going to be limited (e.g., generating a shooter that is not an action game is probably not feasible, but may be desierable). Further, the model showed a tendency to repeat titles with little inventiveness. 
+          </p>
+          <p>
+            Nonetheless, even in its current state, it is plausibly useful as a tool for quickly brainstorming ideas for future projects. Moreover, the approaches here can be extended to other data, areas and applications as well (e.g., possibly neural style transfer). 
           </p>
 
         </article>
