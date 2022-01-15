@@ -2,11 +2,13 @@
 
 
 p.card-text {
-	color:  gray;
+	color:  black;
 }
 
 a.card-link {
 	text-decoration: none;
+	font-weight: bold;
+	color: black;
 }
 
 button.btn-link, button.btn-link:hover {
@@ -38,6 +40,22 @@ code {
 
 .st_pic {
 	padding: 10px;
+}
+
+.darker_bg {
+	background-color: RGBA(61,21,40, 0.3);
+}
+
+.lighter_bg {
+	background-color: RGBA(61,21,40, 0.1);
+}
+
+.adjusted_button {
+	background-color:  RGBA(81, 4, 94);
+	border-color: RGBA(81, 4, 94);
+}
 
 
+.adjusted_link {
+	color:  RGBA(81, 4, 94, 0.7);
 }
